@@ -10,11 +10,11 @@ export default function Home() {
 
   useEffectAsync(async () => {
     setGenres(undefined);
-    const trackId = getTrackIdFromURL(url);
+    const canBeParsed = getTrackIdFromURL(url);
 
-    if (trackId !== null) {
+    if (canBeParsed !== null) {
       const response = await fetchAsJson<GenreResponse>(
-        `/api/genres?url=${trackId}`,
+        `/api/genres?url=${url}`,
       );
 
       setGenres(response.genres);
