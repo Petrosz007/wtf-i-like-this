@@ -51,6 +51,7 @@ export default function Home() {
                   '',
                 )}.html`}
                 target="_blank"
+                rel="noreferrer"
               >
                 {genre}
               </a>
