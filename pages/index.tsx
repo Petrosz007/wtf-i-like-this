@@ -14,7 +14,7 @@ export default function Home() {
 
     if (canBeParsed !== null) {
       const response = await fetchAsJson<GenreResponse>(
-        `/api/genres?url=${url}`,
+        `/api/genres?url=${encodeURIComponent(url)}`,
       );
 
       setGenres(response.genres);
