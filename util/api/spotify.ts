@@ -1,56 +1,134 @@
 import SpotifyWebApi from 'spotify-web-api-node';
+import { fetchAsJson } from '../utils';
 import Config from './config';
 
-async function getAccessToken(
-  clientId: string,
-  clientSecret: string,
-): Promise<string> {
-  const params = new URLSearchParams();
-  params.append('grant_type', 'client_credentials');
+interface SpotifyRefreshAccessTokenResult {
+  access_token: string;
+  expires_in: number;
+}
 
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    body: params,
-    headers: {
-      Authorization: 'Basic ' + btoa(clientId + ':' + clientSecret),
-    },
-  });
+interface SpotifyInitialAccessTokenResult
+  extends SpotifyRefreshAccessTokenResult {
+  refresh_token: string;
+}
 
-  if (!response.ok)
-    throw new Error(
-      `Cannot get access token from the spotify api! ${response.statusText}`,
+const bearerHeaders = (clientId: string, clientSecret: string) =>
+  'Basic ' +
+  Buffer.from(clientId + ':' + clientSecret, 'utf8').toString('base64');
+
+export class SpotifyError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+interface SpotifyWebApiError {
+  body: {
+    error: {
+      status: number;
+      message: string;
+    };
+  };
+}
+
+function isSpotifyWebApiError(obj: any): obj is SpotifyWebApiError {
+  return (
+    'body' in obj && 'error' in obj['body'] && 'status' in obj['body']['error']
+  );
+}
+
+export default class Spotify {
+  private config: Config;
+  private spotifyApi: SpotifyWebApi;
+  private expiresAt: number = Date.now();
+  private refreshToken: string | undefined;
+
+  constructor(config: Config) {
+    this.config = config;
+
+    this.spotifyApi = new SpotifyWebApi({
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      redirectUri: 'https://andipeter.me',
+    });
+  }
+
+  private spotifyPost = async <T>(params: string[][]): Promise<T> =>
+    await fetchAsJson<T>('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      body: new URLSearchParams(params),
+      headers: {
+        Authorization: bearerHeaders(
+          this.config.clientId,
+          this.config.clientSecret,
+        ),
+      },
+    });
+
+  private async getInitialAccessToken(): Promise<string> {
+    const data = await this.spotifyPost<SpotifyInitialAccessTokenResult>([
+      ['grant_type', 'client_credentials'],
+    ]);
+
+    this.expiresAt = Date.now() + data.expires_in * 1000; // Date.now() is in milliseconds, expires_in is in seconds
+    this.refreshToken = data.refresh_token;
+
+    return data.access_token;
+  }
+
+  private async refreshAccessToken(): Promise<string> {
+    if (this.refreshToken === undefined) {
+      throw new Error(
+        'Cannot refresh spotify access token, you have to request an access token first!',
+      );
+    }
+
+    const data = await this.spotifyPost<SpotifyRefreshAccessTokenResult>([
+      ['grant_type', 'refresh_token'],
+      ['refresh_token', this.refreshToken],
+    ]);
+
+    this.expiresAt = Date.now() + data.expires_in * 1000; // Date.now() is in milliseconds, expires_in is in seconds
+
+    return data.access_token;
+  }
+
+  private async ensureSpotifyAccessToken() {
+    if (this.expiresAt > Date.now()) return;
+
+    const token =
+      this.refreshToken === undefined
+        ? await this.getInitialAccessToken()
+        : await this.refreshAccessToken();
+
+    this.spotifyApi.setAccessToken(token);
+
+    // TODO: Structured logging
+    // https://nextjs.org/docs/going-to-production#logging
+    console.log(
+      `Spotify API initialized! Expires at ${new Date(
+        this.expiresAt,
+      ).toUTCString()}`,
     );
-  var data = (await response.json()) as { access_token: string };
+  }
 
-  return data.access_token;
-}
+  async genresFromTrackId(trackId: string): Promise<string[]> {
+    await this.ensureSpotifyAccessToken();
 
-export async function initSpotifyApi() {
-  const clientId = Config.clientId;
-  const clientSecret = Config.clientSecret;
+    try {
+      const track = await this.spotifyApi.getTrack(trackId);
+      const artistId = track.body.artists[0].id;
+      const genres = (await this.spotifyApi.getArtist(artistId)).body.genres;
 
-  const spotifyApi = new SpotifyWebApi({
-    clientId,
-    clientSecret,
-    redirectUri: 'https://andipeter.me',
-  });
+      return genres;
+    } catch (err) {
+      if (isSpotifyWebApiError(err)) {
+        if (err.body.error.status === 400) {
+          throw new SpotifyError(err.body.error.message);
+        }
+      }
 
-  const token = await getAccessToken(clientId, clientSecret);
-  spotifyApi.setAccessToken(token);
-
-  // TODO: Structured logging
-  // https://nextjs.org/docs/going-to-production#logging
-  console.log('Spotify API initialized!');
-
-  return spotifyApi;
-}
-
-const SpotifyApi = await initSpotifyApi();
-
-export async function genresFromTrackId(trackId: string) {
-  const track = await SpotifyApi.getTrack(trackId);
-  const artistId = track.body.artists[0].id;
-  const genres = (await SpotifyApi.getArtist(artistId)).body.genres;
-
-  return genres;
+      throw err;
+    }
+  }
 }

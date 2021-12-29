@@ -1,7 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { GenreResponse } from '../../models/apiResponses';
-import { genresFromTrackId } from '../../util/api/spotify';
+import Config from '../../util/api/config';
+import Spotify, { SpotifyError } from '../../util/api/spotify';
 import { getTrackIdFromURL } from '../../util/parser';
+
+const spotify = new Spotify(new Config());
 
 async function getGenres(req: NextApiRequest, res: NextApiResponse) {
   const url = req.query.url as string;
@@ -10,15 +13,24 @@ async function getGenres(req: NextApiRequest, res: NextApiResponse) {
 
   if (trackId === null) {
     res
-      .status(403)
+      .status(400)
       .json({ message: "Bad URL format, can't parse track id from this url!" });
     return;
   }
 
-  const genres = await genresFromTrackId(trackId);
-  const responseData: GenreResponse = { genres };
+  try {
+    const genres = await spotify.genresFromTrackId(trackId);
+    const responseData: GenreResponse = { genres };
 
-  res.status(200).json(responseData);
+    res.status(200).json(responseData);
+    return;
+  } catch (err) {
+    if (err instanceof SpotifyError) {
+      res.status(400).json({ message: err.message });
+      return;
+    }
+    throw err;
+  }
 }
 
 export default getGenres;

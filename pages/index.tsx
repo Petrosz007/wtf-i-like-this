@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { fetchAsJson, useEffectAsync } from '../util/utils';
+import {
+  fetchOwnApiAsJson,
+  OwnApiRequestError,
+  useEffectAsync,
+} from '../util/utils';
 import styles from './index.module.scss';
 import { GenreResponse } from '../models/apiResponses';
 import { getTrackIdFromURL } from '../util/parser';
@@ -7,17 +11,25 @@ import { getTrackIdFromURL } from '../util/parser';
 export default function Home() {
   const [url, setUrl] = useState('');
   const [genres, setGenres] = useState<string[] | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   useEffectAsync(async () => {
     setGenres(undefined);
+    setError(undefined);
     const canBeParsed = getTrackIdFromURL(url);
 
     if (canBeParsed !== null) {
-      const response = await fetchAsJson<GenreResponse>(
-        `/api/genres?url=${encodeURIComponent(url)}`,
-      );
+      try {
+        const response = await fetchOwnApiAsJson<GenreResponse>(
+          `/api/genres?url=${encodeURIComponent(url)}`,
+        );
 
-      setGenres(response.genres);
+        setGenres(response.genres);
+      } catch (err) {
+        if (err instanceof OwnApiRequestError) {
+          setError(`Error: ${err.message}`);
+        }
+      }
     }
   }, [url]);
 
@@ -39,6 +51,7 @@ export default function Home() {
       />
       <br />
       <div className={styles.genres}>
+        {error !== undefined && <i>{error}</i>}
         {genres !== undefined &&
           (genres.length === 0 ? (
             <i>No genres found for this song :C</i>
