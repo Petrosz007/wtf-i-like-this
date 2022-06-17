@@ -5,20 +5,26 @@ import {
   useEffectAsync,
 } from '../util/utils';
 import styles from './index.module.scss';
-import { GenreResponse } from '../models/apiResponses';
-import { getTrackIdFromURL } from '../util/parser';
+import { GenreResponse, PlaylistGenreResponse } from '../models/apiResponses';
+import { getPlaylistIdFromURL, getTrackIdFromURL } from '../util/parser';
+import TrackGenres from '../components/TrackGenres';
+import PlaylistGenres from '../components/PlaylistGenres';
 
 export default function Home() {
   const [url, setUrl] = useState('');
   const [genres, setGenres] = useState<string[] | undefined>(undefined);
+  const [playlistGenres, setPlaylistGenres] = useState<
+    PlaylistGenreResponse | undefined
+  >(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
 
   useEffectAsync(async () => {
     setGenres(undefined);
+    setPlaylistGenres(undefined);
     setError(undefined);
-    const canBeParsed = getTrackIdFromURL(url);
+    const trackCanBeParsed = getTrackIdFromURL(url);
 
-    if (canBeParsed !== null) {
+    if (trackCanBeParsed !== null) {
       try {
         const response = await fetchOwnApiAsJson<GenreResponse>(
           `/api/genres?url=${encodeURIComponent(url)}`,
@@ -30,6 +36,26 @@ export default function Home() {
           setError(`Error: ${err.message}`);
         }
       }
+
+      return;
+    }
+
+    const playlistCanBeParsed = getPlaylistIdFromURL(url);
+
+    if (playlistCanBeParsed !== null) {
+      try {
+        const response = await fetchOwnApiAsJson<PlaylistGenreResponse>(
+          `/api/playlistGenres?url=${encodeURIComponent(url)}`,
+        );
+
+        setPlaylistGenres(response);
+      } catch (err) {
+        if (err instanceof OwnApiRequestError) {
+          setError(`Error: ${err.message}`);
+        }
+      }
+
+      return;
     }
   }, [url]);
 
@@ -47,29 +73,15 @@ export default function Home() {
         value={url}
         onChange={(e) => setUrl(e.target.value)}
         onFocus={(e) => e.target.select()}
-        placeholder="Paste the Spotify URL of the track here..."
+        placeholder="Paste the Spotify URL of the track or playlist here..."
       />
       <br />
       <div className={styles.genres}>
         {error !== undefined && <i>{error}</i>}
-        {genres !== undefined &&
-          (genres.length === 0 ? (
-            <i>No genres found for this song :C</i>
-          ) : (
-            genres.map((genre) => (
-              <a
-                key={genre}
-                href={`https://everynoise.com/engenremap-${genre.replaceAll(
-                  ' ',
-                  '',
-                )}.html`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {genre}
-              </a>
-            ))
-          ))}
+        {genres !== undefined && <TrackGenres genres={genres} />}
+        {playlistGenres !== undefined && (
+          <PlaylistGenres playlistGenres={playlistGenres} />
+        )}
       </div>
     </div>
   );

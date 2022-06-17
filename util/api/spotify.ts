@@ -112,15 +112,74 @@ export default class Spotify {
     );
   }
 
+  async genresFromArtistId(artistId: string): Promise<string[]> {
+    await this.ensureSpotifyAccessToken();
+
+    try {
+      const genres = (await this.spotifyApi.getArtist(artistId)).body.genres;
+
+      return genres;
+    } catch (err) {
+      if (isSpotifyWebApiError(err)) {
+        if (err.body.error.status === 400) {
+          throw new SpotifyError(err.body.error.message);
+        }
+      }
+
+      throw err;
+    }
+  }
+
   async genresFromTrackId(trackId: string): Promise<string[]> {
     await this.ensureSpotifyAccessToken();
 
     try {
       const track = await this.spotifyApi.getTrack(trackId);
       const artistId = track.body.artists[0].id;
-      const genres = (await this.spotifyApi.getArtist(artistId)).body.genres;
+      const genres = await this.genresFromArtistId(artistId);
 
       return genres;
+    } catch (err) {
+      if (isSpotifyWebApiError(err)) {
+        if (err.body.error.status === 400) {
+          throw new SpotifyError(err.body.error.message);
+        }
+      }
+
+      throw err;
+    }
+  }
+
+  async genresFromPlaylistId(
+    playlistId: string,
+  ): Promise<{ genre: string; count: number }[]> {
+    await this.ensureSpotifyAccessToken();
+
+    try {
+      const playlist = await this.spotifyApi.getPlaylist(playlistId);
+
+      const tracks = playlist.body.tracks.items;
+      const artistUniqueIds = [
+        ...new Set(tracks.flatMap((track) => track.track.artists[0].id)),
+      ];
+
+      const genres = (
+        await Promise.all(
+          artistUniqueIds.map((artistId) =>
+            this.genresFromArtistId(artistId).then((x) =>
+              x.length === 0 ? ['no genres found'] : x,
+            ),
+          ),
+        )
+      ).flat();
+
+      const genreCounts = new Map<string, number>();
+      genres.forEach((genre) => {
+        genreCounts.set(genre, (genreCounts.get(genre) ?? 0) + 1);
+      });
+      return [...genreCounts]
+        .map(([genre, count]) => ({ genre, count }))
+        .sort((a, b) => b.count - a.count);
     } catch (err) {
       if (isSpotifyWebApiError(err)) {
         if (err.body.error.status === 400) {
