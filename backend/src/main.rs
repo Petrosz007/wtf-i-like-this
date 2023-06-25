@@ -84,10 +84,10 @@ struct PlaylistGenresResponse {
 async fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::builder()
         // Add in `./Config.toml`
-        .add_source(config::File::with_name("Config.toml"))
+        .add_source(config::File::with_name("Config.toml").required(false))
         // Add in settings from the environment (with a prefix of APP)
-        // Eg.. `APP_app_port=3101 cargo run` would set the `app.port` key
-        .add_source(config::Environment::with_prefix("APP").separator("_"))
+        // Eg.. `APP__app__port=3101 cargo run` would set the `app.port` key
+        .add_source(config::Environment::with_prefix("APP").separator("__"))
         .build()
         .unwrap();
 
@@ -121,7 +121,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         );
 
     let socket_addr = SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+        IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
         config.get_int("app.port")? as u16,
     );
     tracing::info!("Starting the server on {socket_addr}");
