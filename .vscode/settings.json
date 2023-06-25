@@ -21,5 +21,10 @@
   "[rust]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  }
+  },
+  "[svelte]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+},
+"svelte.enable-ts-plugin": true
 }
