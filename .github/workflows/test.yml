@@ -2,20 +2,27 @@ name: Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
+
+env: 
+  CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  test-frontend:
+    name: Test Frontend
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '18'
           
       - name: Cache npm global modules (yarn)
         uses: actions/cache@v2
@@ -41,3 +48,22 @@ jobs:
         run: yarn build
         env:
           CI: false
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+        
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - run: cargo build --verbose
+      - run: cargo test --verbose
