@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Auto refresh spotify token
+- Mobile layout
+- Font loading, when content blockers would block google fonts
 
 ## [v1.0.0] - 2023-07-01
 

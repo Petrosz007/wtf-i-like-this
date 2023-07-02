@@ -25,12 +25,14 @@
 </script>
 
 <div class="container">
-    <h1 class="header">
-        <span class="green">WTF</span> I like this
-    </h1>
-    <h2 class="subHeader">
-        ...what <span class="pink">genre</span> is this?
-    </h2>
+    <div class="header">
+        <h1>
+            <span class="green">WTF</span> I like this
+        </h1>
+        <h2>
+            ...what <span class="pink">genre</span> is this?
+        </h2>
+    </div>
     <input
         type="text"
         class="input"
@@ -71,6 +73,8 @@
 <style lang="scss">
     @import '../colors.scss';
 
+    $container-padding: 25px;
+
     .green {
         color: $green;
     }
@@ -80,44 +84,49 @@
     }
 
     .container {
-        width: 100%;
-        height: 100%;
-        margin-top: 100px;
+        width: min(800px, 100% - 2 * $container-padding);
+        margin: clamp(40px, 10vw, 100px) auto 0 auto;
+        padding: $container-padding;
+
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
 
         color: white;
-
-        display: grid;
-        grid-template-columns: auto 800px auto;
-        grid-template-rows: calc(6rem + 2rem) 50px 100px;
-        grid-auto-flow: column;
-        gap: 20px;
     }
 
-    .header {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
+    div.header {
+        width: 100%;
+        position: relative;
 
-        font-size: 6rem;
-        color: $green;
-    }
+        font-family: 'Vujahday Script', cursive;
 
-    .subHeader {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
+        h1 {
+            font-size: clamp(3rem, 12vw, 6rem);
+            color: $green;
+        }
 
-        margin-left: 500px;
-        font-size: 1.5rem;
-        align-self: flex-end;
-        color: $purple;
+        h2 {
+            position: absolute;
+            right: 100px;
+            bottom: 0;
+
+            font-size: 1.5rem;
+            color: $purple;
+
+            @media (max-width: 800px) {
+                right: 3rem;
+                bottom: -0.5rem;
+            }
+        }
     }
 
     .input {
-        grid-column: 2 / 3;
-        grid-row: 2 / 3;
-
         padding: 7px;
 
         font-family: 'Dosis', sans-serif;
+        font-weight: 200;
+        font-style: normal;
         font-size: 1.5rem;
         color: $purple;
         text-align: center;
@@ -137,6 +146,8 @@
         gap: 20px;
 
         font-family: 'Dosis', sans-serif;
+        font-weight: 200;
+        font-style: normal;
 
         a {
             font-size: 2rem;
