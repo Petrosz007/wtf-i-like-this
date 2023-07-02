@@ -8,7 +8,6 @@ use std::{
 };
 
 use axum::{
-    debug_handler,
     extract::{Query, State},
     http::{Method, StatusCode},
     response::IntoResponse,

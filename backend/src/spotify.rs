@@ -3,7 +3,7 @@ use itertools::Itertools;
 use rspotify::{
     model::{ArtistId, IdError, PlaylistId, TrackId},
     prelude::BaseClient,
-    ClientCredsSpotify, ClientError, Credentials,
+    ClientCredsSpotify, ClientError, Config, Credentials,
 };
 use thiserror::Error;
 
@@ -27,8 +27,12 @@ pub struct SpotifyClient {
 impl SpotifyClient {
     pub async fn new(client_id: &str, client_secret: &str) -> SpotifyClient {
         let creds = Credentials::new(client_id, client_secret);
+        let config = Config {
+            token_refreshing: true,
+            ..Default::default()
+        };
 
-        let spotify = ClientCredsSpotify::new(creds);
+        let spotify = ClientCredsSpotify::with_config(creds, config);
 
         spotify.request_token().await.unwrap();
 
