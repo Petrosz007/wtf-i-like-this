@@ -7,18 +7,35 @@
         %sveltekit.head%
     </head>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dosis:wght@200&family=Vujahday+Script&display=swap');
+        @font-face {
+            font-family: 'Dosis';
+            font-style: normal;
+            font-weight: 200;
+            font-display: swap;
+            src: url(Dosis-VariableFont_wght.woff2) format('woff');
+        }
+
+        @font-face {
+            font-family: 'Vujahday Script';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url(VujahdayScript-Regular.woff2) format('woff2');
+        }
 
         * {
             margin: 0;
             padding: 0;
         }
 
+        html {
+            width: 100%;
+        }
+
         body {
-            padding: 0;
-            margin: 0;
+            width: 100%;
             background-color: #24262c;
-            font-family: 'Vujahday Script', cursive;
+            font-family: 'Dosis', sans-serif;
         }
     </style>
     <body data-sveltekit-preload-data="hover">
