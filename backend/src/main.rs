@@ -66,6 +66,18 @@ async fn genres(
     }
 }
 
+async fn live() -> impl IntoResponse {
+    StatusCode::OK
+}
+
+/// The app can't function without a connection to the Spotify API. Therefore, if there is something wrong with the connection
+/// we intentionally fail the readiness check.
+async fn ready(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, MySpotifyError> {
+    state.spotify_client.check_readiness().await?;
+
+    Ok(StatusCode::OK)
+}
+
 #[derive(Serialize)]
 pub struct GenreCount {
     genre: String,
@@ -107,6 +119,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // build our application with a single route
     let app = Router::new()
         .route("/api/genres", get(genres))
+        .route("/live", get(live))
+        .route("/ready", get(ready))
         .with_state(shared_state)
         .layer(
             TraceLayer::new_for_http()
