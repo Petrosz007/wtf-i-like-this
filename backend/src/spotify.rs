@@ -39,6 +39,13 @@ impl SpotifyClient {
         SpotifyClient { spotify }
     }
 
+    /// Checks the readiness of the Spotify connection. If it returns Err there is an issue.
+    pub async fn check_readiness(&self) -> Result<(), MySpotifyError> {
+        self.spotify.refetch_token().await?;
+
+        Ok(())
+    }
+
     pub async fn genres_from_artist_id(
         &self,
         artist_id: ArtistId<'_>,
