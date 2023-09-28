@@ -1,5 +1,6 @@
 use futures::future::try_join_all;
 use itertools::Itertools;
+use reqwest::{Client, Url};
 use rspotify::{
     model::{ArtistId, IdError, PlaylistId, TrackId},
     prelude::BaseClient,
@@ -7,7 +8,10 @@ use rspotify::{
 };
 use thiserror::Error;
 
-use crate::GenreCount;
+use crate::{
+    url_parser::{parse_url, UrlParseResult},
+    GenreCount,
+};
 
 #[derive(Error, Debug)]
 pub enum MySpotifyError {
@@ -15,6 +19,8 @@ pub enum MySpotifyError {
     IdError(#[from] IdError),
     #[error("client error")]
     ClientError(#[from] ClientError),
+    #[error("HTTP error")]
+    HttpError(#[from] reqwest::Error),
     #[error("unknown error")]
     Unknown,
 }
@@ -22,10 +28,12 @@ pub enum MySpotifyError {
 #[derive(Debug)]
 pub struct SpotifyClient {
     spotify: ClientCredsSpotify,
+    shortlink_resolver_client: Client,
 }
 
 impl SpotifyClient {
     pub async fn new(client_id: &str, client_secret: &str) -> SpotifyClient {
+        // Spotify
         let creds = Credentials::new(client_id, client_secret);
         let config = Config {
             token_refreshing: true,
@@ -36,7 +44,16 @@ impl SpotifyClient {
 
         spotify.request_token().await.unwrap();
 
-        SpotifyClient { spotify }
+        // Shortlink resolver client
+        let shortlink_resolver_client = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .expect("Client should be built");
+
+        SpotifyClient {
+            spotify,
+            shortlink_resolver_client,
+        }
     }
 
     /// Checks the readiness of the Spotify connection. If it returns Err there is an issue.
@@ -44,6 +61,27 @@ impl SpotifyClient {
         self.spotify.refetch_token().await?;
 
         Ok(())
+    }
+
+    #[tracing::instrument]
+    pub async fn resolve_spotify_shortlink(
+        &self,
+        url: Url,
+    ) -> Result<UrlParseResult, MySpotifyError> {
+        let response = self.shortlink_resolver_client.head(url).send().await?;
+
+        match response.headers().get("Location") {
+            Some(resolved_url) => {
+                let resolved_url = resolved_url
+                    .to_str()
+                    .expect("the scring only contains visible ASCII characters")
+                    .to_owned();
+
+                tracing::debug!("Resolved Spotify shortlink to {resolved_url}");
+                Ok(parse_url(&resolved_url))
+            }
+            None => Err(MySpotifyError::Unknown),
+        }
     }
 
     pub async fn genres_from_artist_id(
