@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.3 - 2023-09-30
+
+### Added
+
+- Spotify shortlink resolution ([#26]https://github.com/Petrosz007/wtf-i-like-this/pull/26)
+
+### Security
+
+- Bump get-func-name from 2.0.0 to 2.0.2 in /frontend ([#25](https://github.com/Petrosz007/wtf-i-like-this/pull/25))
+
 ## v1.0.2 - 2023-08-08
 
 ### Added
