@@ -42,7 +42,12 @@ async fn genres(
     State(state): State<Arc<AppState>>,
     Query(params): Query<GenresParams>,
 ) -> Result<impl IntoResponse, MySpotifyError> {
-    let parsed_url = parse_url(&params.url);
+    let mut parsed_url = parse_url(&params.url);
+
+    // Resolve spotify shortlinks, and them parse them as usual
+    if let UrlParseResult::SpotifyShortLink(url) = parsed_url {
+        parsed_url = state.spotify_client.resolve_spotify_shortlink(url).await?;
+    }
 
     match parsed_url {
         UrlParseResult::SpotifyTrackId(track_id) => {
@@ -152,6 +157,14 @@ impl IntoResponse for MySpotifyError {
             }
             MySpotifyError::ClientError(err) => {
                 tracing::error!("Client error happened: {}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal server error".to_owned(),
+                )
+                    .into_response()
+            }
+            MySpotifyError::HttpError(err) => {
+                tracing::error!("Http error happened: {}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "Internal server error".to_owned(),
