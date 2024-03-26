@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
@@ -76,8 +77,46 @@ func (deps *SpotifyClientDeps) GenresFromArtistId(artistId string) ([]string, er
 func (deps *SpotifyClientDeps) GenresFromTrackId(trackId string) ([]string, error) {
 	track, err := deps.spotifyClient.GetTrack(deps.ctx, spotify.ID(trackId))
 	if err != nil {
-		return []string{}, nil
+		return []string{}, err
 	}
 
 	return deps.GenresFromArtistId(string(track.Artists[0].ID))
+}
+
+func (deps *SpotifyClientDeps) GenresFromPlaylistId(playlistId string) (map[string]int, error) {
+	playlist, err := deps.spotifyClient.GetPlaylistItems(deps.ctx, spotify.ID(playlistId))
+	if err != nil {
+		return map[string]int{}, nil
+	}
+
+	ch := make(chan []string)
+	var wg sync.WaitGroup
+	for _, track := range playlist.Items {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+
+			genres, err := deps.GenresFromTrackId(track.Track.Track.ID.String())
+			if err != nil {
+				// ?: How do we handle errors in gorutines correctly?
+				log.Printf("Error in playlist goroutine %v", err)
+				return
+			}
+			ch <- genres
+		})()
+	}
+
+	go (func() {
+		wg.Wait()
+		close(ch)
+	})()
+
+	genreCounts := make(map[string]int)
+	for genres := range ch {
+		for _, genre := range genres {
+			genreCounts[genre]++
+		}
+	}
+
+	return genreCounts, nil
 }

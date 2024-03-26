@@ -1,0 +1,11 @@
+{{- if .genreCounts }}
+{{ $genreCounts := .genreCounts }}
+{{- /* .genres is generated from .genreCounts, and .genres is sorted by the count of .genreCounts */ -}}
+{{- range $genre := .genres }}
+<span><a href="{{$genre}}" target="_blank" rel="noreferrer">{{ $genre }}</a>&nbsp;&nbsp;{{index $genreCounts $genre}}</span>
+{{- end }}
+{{- else }}
+{{- range .genres }}
+<a href="{{.}}" target="_blank" rel="noreferrer">{{.}}</a>
+{{- end }}
+{{- end }}

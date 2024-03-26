@@ -26,7 +26,7 @@ func main() {
 			return
 		}
 
-		genres, err := deps.GetGenres(url)
+		genres, genreCounts, err := deps.GetGenres(url)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -34,9 +34,25 @@ func main() {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
+		res := gin.H{
 			"genres": genres,
-		})
+		}
+		if len(genreCounts) > 0 {
+			res["genreCounts"] = genreCounts
+		}
+
+		if c.Request.Header.Get("Accept") == "text/html" {
+			c.HTML(http.StatusOK, "genres.html", res)
+		} else {
+			c.JSON(http.StatusOK, res)
+		}
+	})
+
+	// TODO: Embed the files: https://pkg.go.dev/embed
+	r.Static("/static", "web/static")
+	r.LoadHTMLGlob("web/templates/*")
+	r.GET("/index.html", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 	r.Run()
 }
