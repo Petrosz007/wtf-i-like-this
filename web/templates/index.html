@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" href="/static/favicon.png" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body data-sveltekit-preload-data="hover">
+        <div style="display: contents">
+            <div class="container" hx-ext="response-targets">
+                <div class="header">
+                    <h1><span class="green">WTF</span> I like this</h1>
+                    <h2>...what <span class="pink">genre</span> is this?</h2>
+                </div>
+                <input
+                    type="text"
+                    class="input"
+                    name="url"
+                    onfocus="this.select();"
+                    onclick="this.select();"
+                    hx-get="/api/genres"
+                    hx-trigger="keyup"
+                    hx-target="#genres"
+                    hx-target-4*="#genres"
+                    hx-target-5*="#genres"
+                    hx-indicator="#indicator"
+                    hx-headers='{"Accept": "text/html"}'
+                    placeholder="Paste the Spotify URL of the track or playlist here..."
+                />
+                <span id="indicator" class="htmx-indicator">Loading...</span>
+                <div id="genres">
+                    <p>
+                        Try this example url: <span>https://open.spotify.com/track/2tzt6biW79znRmQCLBSWhG</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <script src="/static/htmx.org@1.9.11.js"></script>
+        <script src="/static/htmx@1.9.11_ext_response-targets.js"></script>
+    </body>
+</html>
