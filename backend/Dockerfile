@@ -1,4 +1,4 @@
-FROM rust:1.70.0 as builder
+FROM rust:1.85.0 as builder
 
 # Installing the dependencies
 # cargo can't install dependencies only, we need a dummy project to build: https://github.com/rust-lang/cargo/issues/2644
@@ -27,9 +27,9 @@ RUN apt update && \
 WORKDIR /app
 
 EXPOSE 80
-ENV APP__APP__PORT 80
-ENV APP__SPOTIFY__CLIENT_ID ""
-ENV APP__SPOTIFY__CLIENT_SECRET ""
+ENV APP__APP__PORT=80
+ENV APP__SPOTIFY__CLIENT_ID=""
+ENV APP__SPOTIFY__CLIENT_SECRET=""
 
 COPY --from=builder /app-build/target/release/backend /app/backend
 
