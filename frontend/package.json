@@ -32,5 +32,6 @@
 		"vite": "^4.5.5",
 		"vitest": "^0.25.3"
 	},
-	"type": "module"
+	"type": "module",
+	"packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
