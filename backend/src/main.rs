@@ -1,11 +1,7 @@
 mod spotify;
 mod url_parser;
 
-use std::{
-    error::Error,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::Arc,
-};
+use std::{error::Error, sync::Arc};
 
 use axum::{
     extract::{Query, State},
@@ -138,15 +134,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .allow_origin(Any),
         );
 
-    let socket_addr = SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-        config.get_int("app.port")? as u16,
-    );
-    tracing::info!("Starting the server on {socket_addr}");
+    let bind_addr = format!("127.0.0.1:{}", config.get_int("app.port")?);
+    let listener = tokio::net::TcpListener::bind(&bind_addr)
+        .await
+        .expect(&format!("that we can bind to {bind_addr}"));
+    tracing::info!("Starting the server on {bind_addr}");
 
-    Ok(axum::Server::bind(&socket_addr)
-        .serve(app.into_make_service())
-        .await?)
+    Ok(axum::serve(listener, app).await?)
 }
 
 impl IntoResponse for MySpotifyError {
