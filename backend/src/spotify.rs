@@ -35,10 +35,7 @@ impl SpotifyClient {
     pub async fn new(client_id: &str, client_secret: &str) -> SpotifyClient {
         // Spotify
         let creds = Credentials::new(client_id, client_secret);
-        let config = Config {
-            token_refreshing: true,
-            ..Default::default()
-        };
+        let config = Config::default();
 
         let spotify = ClientCredsSpotify::with_config(creds, config);
 
@@ -97,7 +94,7 @@ impl SpotifyClient {
         &self,
         track_id: TrackId<'_>,
     ) -> Result<Vec<String>, MySpotifyError> {
-        let artist_id = self.spotify.track(track_id).await?.artists[0]
+        let artist_id = self.spotify.track(track_id, None).await?.artists[0]
             .id
             .clone()
             .expect("Artist should have id");
