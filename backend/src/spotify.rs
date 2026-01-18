@@ -2,15 +2,15 @@ use futures::future::try_join_all;
 use itertools::Itertools;
 use reqwest::{Client, Url};
 use rspotify::{
+    ClientCredsSpotify, ClientError, Config, Credentials,
     model::{ArtistId, IdError, PlaylistId, TrackId},
     prelude::BaseClient,
-    ClientCredsSpotify, ClientError, Config, Credentials,
 };
 use thiserror::Error;
 
 use crate::{
-    url_parser::{parse_url, UrlParseResult},
     GenreCount,
+    url_parser::{UrlParseResult, parse_url},
 };
 
 #[derive(Error, Debug)]
@@ -119,6 +119,7 @@ impl SpotifyClient {
                         Some(track.id.clone().expect("Artost should have an ID"))
                     }
                     rspotify::model::PlayableItem::Episode(_) => None,
+                    rspotify::model::PlayableItem::Unknown(_) => None,
                     // rspotify::prelude::PlayableId::Track(track_id) => Some(track_id.to_string()),
                     // rspotify::prelude::PlayableId::Episode(_) => None,
                 }
