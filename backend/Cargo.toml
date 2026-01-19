@@ -2,29 +2,27 @@
 name = "backend"
 version = "1.0.3"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.92"
 
 [dependencies]
 axum = { version = "0.8", features = ["macros"] }
-serde = { version = "1", features = ["derive"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-rspotify = { version = "0.14", features = ["env-file"] }
-futures = "0.3"
-thiserror = "2"
-itertools = "0.14"
-regex = "1.8"
-once_cell = "1.18"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
-tower-http = { version = "0.6", features = ["trace", "cors"] }
-tracing = "0.1.37"
 config = "0.15"
-reqwest = "0.12"
-
-[dev-dependencies]
-rstest = "0.25"
+futures = "0.3"
+itertools = "0.14"
+once_cell = "1"
+regex = "1"
+reqwest = "0.13"
+rspotify = { version = "0.15", features = ["env-file"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dependencies.openssl]
-version = "0.10.72"
-features = [
-    "vendored"
-]
+version = "0.10"
+features = ["vendored"]
+
+[dev-dependencies]
+rstest = "0.26"

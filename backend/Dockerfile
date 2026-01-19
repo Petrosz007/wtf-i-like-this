@@ -1,4 +1,4 @@
-FROM rust:1.85.0 as builder
+FROM rust:1.92.0 as builder
 
 # Installing the dependencies
 # cargo can't install dependencies only, we need a dummy project to build: https://github.com/rust-lang/cargo/issues/2644
@@ -21,7 +21,7 @@ FROM debian:12-slim
 
 RUN apt update && \
     apt install -y --no-install-recommends \
-        ca-certificates && \
+    ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
